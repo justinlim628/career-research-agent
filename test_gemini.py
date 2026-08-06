@@ -1,11 +1,16 @@
 import google.generativeai as genai
+import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 load_dotenv()
-genai.confi
+# genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# llm = ChatGoogleGenerativeAI(model='gemini-1.5-flash')
-# response = llm.invoke('say hello in one sentence.')
-# print(response.content)
+# for model in genai.list_models():
+#     if 'generateContent' in model.supported_generation_methods:
+#         print(model.name)
+
+llm = ChatGoogleGenerativeAI(model='gemini-flash-latest')
+response = llm.invoke('say hello in one sentence.')
+print(response.content)
