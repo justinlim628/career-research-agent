@@ -6,6 +6,7 @@ class AgentState(TypedDict):
     n: int
     max_results: int
     threshold: float
+    retry_count: int
     queries: list[str]
     search_results: list[dict]
     filtered_results: list[dict]

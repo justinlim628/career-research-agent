@@ -108,3 +108,11 @@ def generate_report_node(state: AgentState) -> dict:
     report = generate_report(state["aggregated_skills"], state["role"])
 
     return {"report": report}
+
+
+def increase_search_scope_node(state: AgentState) -> dict:
+    print("Retrying...")
+    return {
+        "max_results": state["max_results"] + 5,
+        "retry_count": state["retry_count"] + 1,
+    }

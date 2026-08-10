@@ -6,9 +6,17 @@ from app.graph.nodes import (
     filter_relevance_node,
     generate_queries_node,
     generate_report_node,
+    increase_search_scope_node,
     search_node,
 )
 from app.graph.state import AgentState
+
+
+def retry_search(state: AgentState) -> str:
+    if len(state["filtered_results"]) < 3 and state["retry_count"] < 3:
+        return "retry"
+    return "proceed"
+
 
 graph = StateGraph(AgentState)
 
@@ -18,12 +26,19 @@ graph.add_node("filter_relevance", filter_relevance_node)
 graph.add_node("extract_skills", extract_skills_node)
 graph.add_node("aggregate_skills", aggregate_skills_node)
 graph.add_node("generate_report", generate_report_node)
+graph.add_node("increase_scope", increase_search_scope_node)
 
 graph.set_entry_point("generate_queries")
 
 graph.add_edge("generate_queries", "search")
 graph.add_edge("search", "filter_relevance")
-graph.add_edge("filter_relevance", "extract_skills")
+# graph.add_edge("filter_relevance", "extract_skills")
+graph.add_conditional_edges(
+    "filter_relevance",
+    retry_search,
+    {"retry": "increase_scope", "proceed": "extract_skills"},
+)
+graph.add_edge("increase_scope", "search")
 graph.add_edge("extract_skills", "aggregate_skills")
 graph.add_edge("aggregate_skills", "generate_report")
 graph.add_edge("generate_report", END)
