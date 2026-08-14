@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Career Research Agent</title>
+</head>
+
+<body>
+    <h1>Career Research Agent</h1>
+
+    <form id="research-form">
+        <input type="text" id="role-input" placeholder="Role (e.g. AI Engineer)" required>
+        <button type="submit">Research</button>
+    </form>
+
+    <div id="status"></div>
+    <pre id="report"></pre>
+
+    <script>
+        document.getElementById('research-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const role = document.getElementById('role-input').value;
+            const statusDiv = document.getElementById('status');
+            const reportDiv = document.getElementById('report');
+
+            statusDiv.textContent = 'Researching... this may take a minute.';
+            reportDiv.textContent = '';
+
+            try {
+                const response = await fetch('/research', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: role })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Request failed');
+                }
+
+                const data = await response.json();
+                statusDiv.textContent = '';
+                reportDiv.textContent = data.report;
+            } catch (error) {
+                statusDiv.textContent = 'Something went wrong. Please try again.';
+            }
+        });
+    </script>
+</body>
+
+</html>
