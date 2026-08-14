@@ -1,3 +1,4 @@
+import os
 from collections import Counter
 
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ from app.graph.state import AgentState
 from app.schemas import ExtractSkills, SearchQueries
 
 load_dotenv()
-llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
+llm = ChatGoogleGenerativeAI(model=os.getenv("GEMINI_MODEL"))
 structured_llm = llm.with_structured_output(SearchQueries)
 extract_llm = llm.with_structured_output(ExtractSkills)
 
@@ -23,11 +24,6 @@ def generate_queries(role: str, n: int = 3) -> list[str]:
     return queries
 
 
-def generate_queries_node(state: AgentState) -> dict:
-    queries = generate_queries(state["role"], state["n"])
-    return {"queries": queries}
-
-
 def search(queries: list[str], max_results: int = 5) -> list[dict]:
     all_results = []
     for query in queries:
@@ -35,12 +31,6 @@ def search(queries: list[str], max_results: int = 5) -> list[dict]:
         all_results.extend(response["results"])
 
     return all_results
-
-
-def search_node(state: AgentState) -> dict:
-    results = search(state["queries"], state["max_results"])
-
-    return {"search_results": results}
 
 
 def filter_relevance(results: list[dict], threshold: float = 0.7) -> list[dict]:
@@ -54,12 +44,6 @@ def filter_relevance(results: list[dict], threshold: float = 0.7) -> list[dict]:
             deduped.append(r)
 
     return deduped
-
-
-def filter_relevance_node(state: AgentState) -> dict:
-    filtered_results = filter_relevance(state["search_results"], state["threshold"])
-
-    return {"filtered_results": filtered_results}
 
 
 def extract_skills(result: dict) -> list[str]:
@@ -78,21 +62,10 @@ def extract_all_skills(results: list[dict]) -> list[str]:
     return all_skills
 
 
-def extract_skills_node(state: AgentState) -> dict:
-    skills = extract_all_skills(state["filtered_results"])
-
-    return {"skills": skills}
-
-
 def aggregate_skills(skills: list[str]) -> Counter:
     normalized = [s.strip().lower() for s in skills]
 
     return Counter(normalized)
-
-
-def aggregate_skills_node(state: AgentState) -> dict:
-    counter = aggregate_skills(state["skills"])
-    return {"aggregated_skills": dict(counter)}
 
 
 def generate_report(aggregated_skills: dict, role: str) -> str:
@@ -102,6 +75,35 @@ def generate_report(aggregated_skills: dict, role: str) -> str:
     for skill, count in top_skills:
         lines.append(f"- {skill.capitalize()}: mentioned {count} times")
     return "\n".join(lines)
+
+
+## nodes
+def generate_queries_node(state: AgentState) -> dict:
+    queries = generate_queries(state["role"], state["n"])
+    return {"queries": queries}
+
+
+def search_node(state: AgentState) -> dict:
+    results = search(state["queries"], state["max_results"])
+
+    return {"search_results": results}
+
+
+def filter_relevance_node(state: AgentState) -> dict:
+    filtered_results = filter_relevance(state["search_results"], state["threshold"])
+
+    return {"filtered_results": filtered_results}
+
+
+def extract_skills_node(state: AgentState) -> dict:
+    skills = extract_all_skills(state["filtered_results"])
+
+    return {"skills": skills}
+
+
+def aggregate_skills_node(state: AgentState) -> dict:
+    counter = aggregate_skills(state["skills"])
+    return {"aggregated_skills": dict(counter)}
 
 
 def generate_report_node(state: AgentState) -> dict:
